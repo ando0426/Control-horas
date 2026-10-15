@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1F4E78">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Mis horas de trabajo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%231F4E78'/%3E%3Cpath d='M50 22v30l18 12' stroke='white' stroke-width='9' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Pantalla de PIN -->
+  <section id="pantalla-pin" class="pin" hidden>
+    <div class="pin__caja">
+      <svg class="logo" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#1F4E78"/><path d="M50 22v30l18 12" stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round"/></svg>
+      <h1>Mis horas de trabajo</h1>
+      <p>Escriba su PIN para entrar</p>
+      <form id="form-pin" autocomplete="off">
+        <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="••••" aria-label="PIN" required>
+        <button type="submit" class="btn btn--primario">Entrar</button>
+        <p id="pin-error" class="error" role="alert"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Aplicación -->
+  <div id="app" hidden>
+    <header class="cabecera">
+      <div>
+        <h1 id="titulo">Mis horas de trabajo</h1>
+        <p class="cabecera__sub">Hora ordinaria: <strong id="valor-hora">—</strong></p>
+      </div>
+      <button id="btn-actualizar" class="icono" title="Actualizar" aria-label="Actualizar">⟳</button>
+    </header>
+
+    <div id="aviso-prueba" class="aviso" hidden>
+      Modo de prueba: los datos se guardan solo en este teléfono. Para conectar con Google Sheets, siga la guía.
+    </div>
+
+    <main>
+      <!-- Resumen del período -->
+      <section class="tarjeta resumen" aria-labelledby="periodo-titulo">
+        <div class="resumen__nav">
+          <button class="icono" id="periodo-ant" aria-label="Período anterior">‹</button>
+          <div class="resumen__periodo">
+            <h2 id="periodo-titulo">—</h2>
+            <div class="segmento" role="tablist">
+              <button role="tab" data-modo="quincena" class="activo">Quincena</button>
+              <button role="tab" data-modo="mes">Mes</button>
+            </div>
+          </div>
+          <button class="icono" id="periodo-sig" aria-label="Período siguiente">›</button>
+        </div>
+        <p class="resumen__total" id="res-total">$0</p>
+        <p class="resumen__etiqueta">a recibir en este período</p>
+        <dl class="resumen__datos">
+          <div><dt>Días</dt><dd id="res-dias">0</dd></div>
+          <div><dt>Horas</dt><dd id="res-horas">0</dd></div>
+          <div><dt>Extra</dt><dd id="res-extra">0</dd></div>
+          <div><dt>Dom./fest.</dt><dd id="res-dom">0</dd></div>
+        </dl>
+      </section>
+
+      <!-- Formulario -->
+      <section class="tarjeta" aria-labelledby="form-titulo">
+        <h2 id="form-titulo">Registrar un día</h2>
+        <form id="form-registro" novalidate>
+          <label class="campo">
+            <span>Fecha</span>
+            <input type="date" id="f-fecha" required>
+          </label>
+          <div class="fila">
+            <label class="campo">
+              <span>Entrada</span>
+              <input type="time" id="f-entrada" required>
+            </label>
+            <label class="campo">
+              <span>Salida</span>
+              <input type="time" id="f-salida" required>
+            </label>
+          </div>
+          <label class="campo">
+            <span>Almuerzo o descanso (no se paga)</span>
+            <select id="f-descanso">
+              <option value="0">Sin descanso</option>
+              <option value="15">15 minutos</option>
+              <option value="30">30 minutos</option>
+              <option value="45">45 minutos</option>
+              <option value="60" selected>1 hora</option>
+              <option value="90">1 hora y media</option>
+              <option value="120">2 horas</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Notas (opcional)</span>
+            <input type="text" id="f-notas" maxlength="200" placeholder="Ej.: reemplacé a una compañera">
+          </label>
+
+          <div id="vista-previa" class="previa" aria-live="polite"></div>
+          <p id="form-error" class="error" role="alert"></p>
+
+          <div class="acciones">
+            <button type="submit" class="btn btn--primario" id="btn-guardar">Guardar</button>
+            <button type="button" class="btn" id="btn-cancelar" hidden>Cancelar</button>
+            <button type="button" class="btn btn--peligro" id="btn-borrar" hidden>Borrar</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Lista de días -->
+      <section class="tarjeta" aria-labelledby="lista-titulo">
+        <h2 id="lista-titulo">Días trabajados</h2>
+        <p class="ayuda">Toque un día para corregirlo o borrarlo.</p>
+        <ul id="lista" class="lista"></ul>
+        <p id="lista-vacia" class="vacio">Todavía no hay días en este período.</p>
+      </section>
+
+      <p class="pie">
+        Cálculo con salario mínimo 2026, jornada de 8 h diarias y 42 h semanales,
+        recargo nocturno 35% (desde 7 p.m.), dominical/festivo 90%, extra diurna 25% y extra nocturna 75%.
+        No incluye auxilio de transporte ni prestaciones.
+        <br><button id="btn-salir" class="enlace">Cerrar sesión en este teléfono</button>
+      </p>
+    </main>
+  </div>
+
+  <div id="cargando" class="cargando" hidden><div class="spinner"></div></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="calculo.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
