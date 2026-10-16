@@ -126,13 +126,26 @@
     return Promise.resolve({ ok: true, registros: regs, config: null, festivos: null });
   }
 
+  function normHora(v) {
+    const m = String(v || '').match(/(\d{1,2}):(\d{2})/);
+    return m ? m[1].padStart(2, '0') + ':' + m[2] : '';
+  }
+  function normFecha(v) {
+    const t = String(v || '');
+    let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
+    m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (m) return m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
+    return '';
+  }
+
   function aplicarDatos(datos) {
     if (datos.config && Object.keys(datos.config).length) estado.cfg = Object.assign({}, Calculo.PREDETERMINADO, datos.config);
     if (datos.festivos && datos.festivos.length) estado.festivos = new Set(datos.festivos);
     if (datos.registros) {
       estado.registros = datos.registros.map(function (r) {
-        return { id: String(r.id), fecha: r.fecha, entrada: r.entrada, salida: r.salida, descanso: Number(r.descanso) || 0, notas: r.notas || '' };
-      });
+        return { id: String(r.id), fecha: normFecha(r.fecha), entrada: normHora(r.entrada), salida: normHora(r.salida), descanso: Number(r.descanso) || 0, notas: r.notas || '' };
+      }).filter(function (r) { return r.fecha && r.entrada && r.salida; });
     }
     guardarLS(CLAVE_CACHE, { cfg: estado.cfg, festivos: Array.from(estado.festivos), registros: estado.registros });
   }
@@ -228,6 +241,17 @@
     });
 
     $('lista-vacia').hidden = enPeriodo.length > 0;
+    // Si este período está vacío, ofrecer ir al último período con días guardados
+    const ir = $('ir-ultimo');
+    const anteriores = estado.registros.filter(function (x) { return x.fecha < r.desde; })
+      .sort(function (a, b) { return b.fecha.localeCompare(a.fecha); });
+    if (!enPeriodo.length && anteriores.length) {
+      ir.hidden = false;
+      ir.textContent = 'Ver días anteriores (último: ' + diaTexto(anteriores[0].fecha) + ')';
+      ir.onclick = function () { estado.ref = anteriores[0].fecha; pintar(); };
+    } else {
+      ir.hidden = true;
+    }
     $('res-total').textContent = moneda.format(total);
     $('res-dias').textContent = dias.size;
     $('res-horas').textContent = redondear(horas);

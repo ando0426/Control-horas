@@ -178,3 +178,5 @@ main { display: grid; gap: 16px; }
   .resumen__total { font-size: 2.1rem; }
   .resumen__datos dd { font-size: 1rem; }
 }
+
+.btn--ancho { width: 100%; margin-top: 12px; color: var(--primario); border-color: var(--primario); }
