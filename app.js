@@ -377,6 +377,41 @@
     }
   }
 
+  /* ---------- Reporte ---------- */
+  async function descargarReporte() {
+    const r = rangoPeriodo();
+    const semanas = horasSemana();
+    const filas = estado.registros
+      .filter(function (x) { return x.fecha >= r.desde && x.fecha <= r.hasta; })
+      .sort(function (a, b) { return (a.fecha + a.entrada).localeCompare(b.fecha + b.entrada); })
+      .map(function (reg) {
+        const dia = aFecha(reg.fecha).toLocaleDateString('es-CO', { weekday: 'long' });
+        return {
+          fecha: reg.fecha,
+          dia: dia.charAt(0).toUpperCase() + dia.slice(1),
+          entradaTexto: hora12(reg.entrada),
+          salidaTexto: hora12(reg.salida),
+          descanso: reg.descanso,
+          notas: reg.notas,
+          c: calcularRegistro(reg),
+          semana42: (semanas[lunesDe(reg.fecha)] || 0) > estado.cfg.jornadaSemanal + 1e-9
+        };
+      });
+    if (!filas.length) { aviso('No hay días en este período para el reporte.'); return; }
+    const btn = $('btn-reporte'); btn.disabled = true; mostrarCarga(true);
+    try {
+      await Reporte.descargar({
+        titulo: tituloPeriodo(r), desde: r.desde, hasta: r.hasta,
+        cfg: estado.cfg, valorHora: Calculo.valorHora(estado.cfg), filas: filas
+      });
+      aviso('Reporte descargado');
+    } catch (e) {
+      aviso('No se pudo crear el reporte. Revise el internet.');
+    } finally {
+      btn.disabled = false; mostrarCarga(false);
+    }
+  }
+
   /* ---------- Inicio ---------- */
   function iniciar() {
     if (CONF.TITULO) { $('titulo').textContent = CONF.TITULO; document.title = CONF.TITULO; }
@@ -401,6 +436,7 @@
     document.querySelectorAll('.segmento button').forEach(function (b) {
       b.addEventListener('click', function () { estado.modo = b.dataset.modo; pintar(); });
     });
+    $('btn-reporte').addEventListener('click', descargarReporte);
     $('btn-actualizar').addEventListener('click', function () { cargar().then(function (ok) { if (ok) aviso('Actualizado'); }); });
     $('btn-salir').addEventListener('click', function () {
       if (!confirm('¿Cerrar sesión en este teléfono? Sus datos quedan guardados en Google.')) return;

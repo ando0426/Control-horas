@@ -180,3 +180,4 @@ main { display: grid; gap: 16px; }
 }
 
 .btn--ancho { width: 100%; margin-top: 12px; color: var(--primario); border-color: var(--primario); }
+.ayuda-reporte { margin: 6px 0 0; color: var(--suave); font-size: .82rem; }
