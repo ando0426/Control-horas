@@ -461,7 +461,7 @@
 
     // Mostrar lo último guardado mientras carga
     const cache = leerLS(CLAVE_CACHE, null);
-    if (cache && !MODO_PRUEBA) aplicarDatos(cache);
+    if (cache && !MODO_PRUEBA) aplicarDatos({ config: cache.cfg, festivos: cache.festivos, registros: cache.registros });
 
     if (MODO_PRUEBA) {
       $('btn-salir').hidden = true;
