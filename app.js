@@ -389,7 +389,8 @@
   }
 
   /* ---------- Reporte ---------- */
-  async function descargarReporte() {
+  async function descargarReporte(ev) {
+    const formato = ev && ev.currentTarget && ev.currentTarget.id === 'btn-pdf' ? 'pdf' : 'excel';
     const r = rangoPeriodo();
     const semanas = horasSemana();
     const filas = estado.registros
@@ -409,9 +410,9 @@
         };
       });
     if (!filas.length) { aviso('No hay días en este período para el reporte.'); return; }
-    const btn = $('btn-reporte'); btn.disabled = true; mostrarCarga(true);
+    const btn = $(formato === 'pdf' ? 'btn-pdf' : 'btn-reporte'); btn.disabled = true; mostrarCarga(true);
     try {
-      await Reporte.descargar({
+      await Reporte[formato === 'pdf' ? 'descargarPDF' : 'descargar']({
         titulo: tituloPeriodo(r), desde: r.desde, hasta: r.hasta,
         cfg: estado.cfg, valorHora: Calculo.valorHora(estado.cfg), filas: filas
       });
@@ -448,6 +449,7 @@
       b.addEventListener('click', function () { estado.modo = b.dataset.modo; pintar(); });
     });
     $('btn-reporte').addEventListener('click', descargarReporte);
+    $('btn-pdf').addEventListener('click', descargarReporte);
     $('btn-actualizar').addEventListener('click', function () { cargar().then(function (ok) { if (ok) aviso('Actualizado'); }); });
     $('btn-salir').addEventListener('click', function () {
       if (!confirm('¿Cerrar sesión en este teléfono? Sus datos quedan guardados en Google.')) return;

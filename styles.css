@@ -181,3 +181,5 @@ main { display: grid; gap: 16px; }
 
 .btn--ancho { width: 100%; margin-top: 12px; color: var(--primario); border-color: var(--primario); }
 .ayuda-reporte { margin: 6px 0 0; color: var(--suave); font-size: .82rem; }
+.reportes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.reportes .btn--ancho { margin-top: 0; padding: 0 10px; }

@@ -179,5 +179,121 @@
     return nombre;
   }
 
-  window.Reporte = { descargar: descargar };
+  /* ---------- PDF básico ---------- */
+  const URL_JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  const URL_AUTOTABLE = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+  const cargados = {};
+  function cargarScript(url) {
+    if (cargados[url]) return cargados[url];
+    cargados[url] = new Promise(function (ok, falla) {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = function () { ok(); };
+      s.onerror = function () { delete cargados[url]; falla(new Error('Sin conexión para generar el PDF')); };
+      document.head.appendChild(s);
+    });
+    return cargados[url];
+  }
+
+  // Las fuentes básicas del PDF no tienen algunos símbolos: se cambian por equivalentes
+  function limpio(t) {
+    return String(t == null ? '' : t).replace(/[–—]/g, '-').replace(/[  ]/g, ' ');
+  }
+  function plata(n) { return '$ ' + Math.round(n).toLocaleString('es-CO'); }
+  function hrs(n) {
+    const t = Math.round(n * 60), h = Math.floor(t / 60), m = t % 60;
+    return m ? h + ' h ' + m + ' min' : h + ' h';
+  }
+  function fechaCorta(iso) { const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+
+  async function descargarPDF(datos) {
+    if (!(window.jspdf && window.jspdf.jsPDF)) await cargarScript(URL_JSPDF);
+    await cargarScript(URL_AUTOTABLE);
+    const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'letter' });
+    const ancho = doc.internal.pageSize.getWidth();
+    const M = 15;
+
+    // Encabezado
+    doc.setFillColor(31, 78, 120); doc.rect(0, 0, ancho, 26, 'F');
+    doc.setTextColor(255); doc.setFont('helvetica', 'bold'); doc.setFontSize(17);
+    doc.text('Reporte de horas trabajadas', M, 12);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    doc.text(limpio('Período: ' + datos.titulo), M, 20);
+    doc.setFontSize(8);
+    doc.text(limpio('Generado: ' + new Date().toLocaleDateString('es-CO')), ancho - M, 20, { align: 'right' });
+
+    // Totales
+    let dias = new Set(), horas = 0, extra = 0, total = 0;
+    datos.filas.forEach(function (f) {
+      if (f.c.horas > 0) dias.add(f.fecha);
+      horas += f.c.horas; extra += f.c.extraDiu + f.c.extraNoc; total += f.c.total;
+    });
+    const cajas = [['Días trabajados', String(dias.size)], ['Horas trabajadas', hrs(horas)], ['Horas extra', hrs(extra)], ['Total a recibir', plata(total)]];
+    const anchoCaja = (ancho - 2 * M - 3 * 4) / 4;
+    cajas.forEach(function (c, i) {
+      const x = M + i * (anchoCaja + 4), y = 33;
+      doc.setDrawColor(210); doc.setFillColor(i === 3 ? 226 : 245, i === 3 ? 239 : 245, i === 3 ? 218 : 245);
+      doc.roundedRect(x, y, anchoCaja, 18, 2, 2, 'FD');
+      doc.setTextColor(90); doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+      doc.text(c[0], x + anchoCaja / 2, y + 6, { align: 'center' });
+      doc.setTextColor(i === 3 ? 46 : 29, i === 3 ? 125 : 36, i === 3 ? 79 : 48);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+      doc.text(limpio(c[1]), x + anchoCaja / 2, y + 14, { align: 'center' });
+    });
+
+    // Tabla
+    const cuerpo = datos.filas.map(function (f) {
+      const ex = f.c.extraDiu + f.c.extraNoc;
+      return [
+        fechaCorta(f.fecha), f.dia, limpio(f.entradaTexto), limpio(f.salidaTexto),
+        f.descanso ? f.descanso + ' min' : '-', hrs(f.c.horas), ex ? hrs(ex) : '-',
+        f.c.tipo === 'Ordinario' ? '' : f.c.tipo, plata(f.c.total)
+      ];
+    });
+    doc.autoTable({
+      startY: 58,
+      margin: { left: M, right: M },
+      head: [['Fecha', 'Día', 'Entrada', 'Salida', 'Descanso', 'Horas', 'Extra', 'Tipo', 'Total']],
+      body: cuerpo,
+      foot: [['TOTAL', '', '', '', '', hrs(horas), extra ? hrs(extra) : '-', '', plata(total)]],
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 2, textColor: 30 },
+      headStyles: { fillColor: [31, 78, 120], textColor: 255, fontStyle: 'bold' },
+      footStyles: { fillColor: [235, 235, 235], textColor: 20, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 248, 248] },
+      columnStyles: { 5: { halign: 'right' }, 6: { halign: 'right' }, 8: { halign: 'right', fontStyle: 'bold' } },
+      didParseCell: function (d) {
+        if (d.section === 'head' && (d.column.index === 5 || d.column.index === 6 || d.column.index === 8)) d.cell.styles.halign = 'right';
+        if (d.section === 'foot' && (d.column.index === 5 || d.column.index === 6 || d.column.index === 8)) d.cell.styles.halign = 'right';
+        if (d.section === 'body' && d.column.index === 6 && d.cell.raw !== '-') d.cell.styles.textColor = [197, 90, 17];
+        if (d.section === 'body' && d.column.index === 7 && d.cell.raw) d.cell.styles.textColor = [112, 48, 160];
+      }
+    });
+
+    // Notas
+    let y = doc.lastAutoTable.finalY + 8;
+    const alto = doc.internal.pageSize.getHeight();
+    const cfg = datos.cfg;
+    const notas = [
+      'Valor hora ordinaria: ' + plata(datos.valorHora) + ' (salario ' + plata(cfg.salario) + ' / ' + cfg.horasMes + ' h al mes).',
+      'Hora extra: lo que pase de ' + cfg.jornadaDiaria + ' h en el día (+' + Math.round(cfg.extraDiurna * 100) + '% de día, +' + Math.round(cfg.extraNocturna * 100) + '% de noche).',
+      'Recargo nocturno +' + Math.round(cfg.recargoNocturno * 100) + '% (7:00 p. m. a 6:00 a. m.). Domingo o festivo +' + Math.round(cfg.recargoDominical * 100) + '%.',
+      'No incluye auxilio de transporte ni prestaciones (prima, cesantías, vacaciones).'
+    ];
+    if (y + notas.length * 5 > alto - 12) { doc.addPage(); y = 20; }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100);
+    notas.forEach(function (t, i) { doc.text(limpio(t), M, y + i * 4.5); });
+
+    // Número de página
+    const n = doc.getNumberOfPages();
+    for (let i = 1; i <= n; i++) {
+      doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150);
+      doc.text('Página ' + i + ' de ' + n, ancho - M, alto - 8, { align: 'right' });
+    }
+
+    const nombre = 'Reporte_horas_' + datos.desde + '_a_' + datos.hasta + '.pdf';
+    doc.save(nombre);
+    return nombre;
+  }
+
+  window.Reporte = { descargar: descargar, descargarPDF: descargarPDF };
 })();
