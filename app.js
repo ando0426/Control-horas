@@ -307,7 +307,18 @@
     caja.classList.add('visible');
   }
 
+  // Valores que se ponen solos en el formulario (los más comunes)
+  const ENTRADA_FIJA = '07:00';
+  const SALIDA_FIJA = '17:00';
+  const DESCANSO_FIJO = '0';
+  function ponerValoresFijos() {
+    $('f-entrada').value = ENTRADA_FIJA;
+    $('f-salida').value = SALIDA_FIJA;
+    $('f-descanso').value = DESCANSO_FIJO;
+  }
+
   function limpiarForm(mantenerFecha) {
+    ponerValoresFijos();
     estado.editId = null;
     if (!mantenerFecha) $('f-fecha').value = hoyISO();
     $('f-notas').value = '';
@@ -444,8 +455,7 @@
     });
 
     $('f-fecha').value = hoyISO();
-    $('f-entrada').value = '08:00';
-    $('f-salida').value = '17:00';
+    ponerValoresFijos();
 
     // Mostrar lo último guardado mientras carga
     const cache = leerLS(CLAVE_CACHE, null);
