@@ -194,7 +194,7 @@
 
   function pintar() {
     $('valor-hora').textContent = moneda.format(Calculo.valorHora(estado.cfg));
-    $('pie-jornada').textContent = Calculo.descripcionJornada(estado.cfg);
+    if ($('pie-jornada') && Calculo.descripcionJornada) $('pie-jornada').textContent = Calculo.descripcionJornada(estado.cfg);
     const r = rangoPeriodo();
     $('periodo-titulo').textContent = tituloPeriodo(r);
     document.querySelectorAll('.segmento button').forEach(function (b) {
