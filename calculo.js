@@ -26,6 +26,29 @@
       : (h >= cfg.inicioNoche && h < cfg.finNoche);
   }
 
+  // Jornada por día de la semana: si en la hoja Configuracion existe, por ejemplo,
+  // "jornadaViernes = 8.5", ese día se usa ese valor; si no, se usa jornadaDiaria.
+  const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+  const DIAS_TEXTO = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+  function jornadaDelDia(fecha, cfg) {
+    const dia = new Date(fecha + 'T12:00:00').getDay();
+    const v = Number(cfg['jornada' + DIAS[dia]]);
+    return v > 0 ? v : cfg.jornadaDiaria;
+  }
+
+  /** Texto como "9 h al día (viernes: 8,5 h)" para notas y reportes. */
+  function descripcionJornada(cfgEntrada) {
+    const cfg = Object.assign({}, PREDETERMINADO, cfgEntrada || {});
+    const num = function (n) { return String(Math.round(n * 100) / 100).replace('.', ','); };
+    const especiales = [];
+    for (let i = 1; i <= 7; i++) {
+      const d = i % 7, v = Number(cfg['jornada' + DIAS[d]]);
+      if (v > 0 && v !== cfg.jornadaDiaria) especiales.push(DIAS_TEXTO[d] + ': ' + num(v) + ' h');
+    }
+    return num(cfg.jornadaDiaria) + ' h al día' + (especiales.length ? ' (' + especiales.join(', ') + ')' : '');
+  }
+
   function tipoDeDia(fecha, festivos) {
     if (festivos && festivos.has(fecha)) return 'Festivo';
     const d = new Date(fecha + 'T12:00:00');
@@ -41,7 +64,8 @@
     if (fin <= ini) fin += 1440; // salió después de medianoche
 
     const trabajados = Math.max(0, fin - ini - (Number(r.descanso) || 0));
-    const extra = Math.max(0, trabajados - cfg.jornadaDiaria * 60);
+    const jornada = jornadaDelDia(r.fecha, cfg);
+    const extra = Math.max(0, trabajados - Math.round(jornada * 60));
 
     // Las horas extra son las últimas del turno
     let nocheTotal = 0, nocheExtra = 0;
@@ -78,7 +102,7 @@
     return c.salario / c.horasMes;
   }
 
-  const api = { PREDETERMINADO: PREDETERMINADO, calcular: calcular, valorHora: valorHora, tipoDeDia: tipoDeDia };
+  const api = { PREDETERMINADO: PREDETERMINADO, calcular: calcular, valorHora: valorHora, tipoDeDia: tipoDeDia, jornadaDelDia: jornadaDelDia, descripcionJornada: descripcionJornada };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.Calculo = api;
 })(this);

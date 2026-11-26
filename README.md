@@ -111,6 +111,7 @@ En la hoja de Google, pestaña **Configuracion**, cambie el número de la column
 | salario | 1.750.905 | Salario mínimo mensual |
 | horasMes | 210 | Horas ordinarias al mes (42 h por semana) |
 | jornadaDiaria | 8 | Lo que pase de aquí en un día es hora extra (9 si pactaron jornada flexible) |
+| jornadaViernes | 8,5 | Opcional: jornada distinta para un día. Se puede usar jornadaLunes, jornadaMartes, jornadaMiercoles, jornadaJueves, jornadaViernes, jornadaSabado o jornadaDomingo (sin tildes) |
 | recargoNocturno | 35% | De 7:00 p.m. a 6:00 a.m. |
 | recargoDominical | 90% | Domingos y festivos. **Cambiar a 100% el 1 de julio de 2027** |
 | extraDiurna | 25% | Hora extra de día |

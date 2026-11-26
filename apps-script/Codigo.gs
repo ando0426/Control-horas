@@ -27,6 +27,7 @@ const CONFIG_INICIAL = [
   ['salario', 1750905, 'Salario mínimo mensual 2026 (Decreto 1469 de 2025)'],
   ['horasMes', 210, 'Horas ordinarias al mes (jornada de 42 h desde 15-jul-2026)'],
   ['jornadaDiaria', 8, 'Horas máximas al día. Lo que pase de aquí es hora extra'],
+  ['jornadaViernes', 8.5, 'Horas del viernes (7:00 a.m. a 3:30 p.m.). Borre esta fila si el viernes es igual a los demás días'],
   ['jornadaSemanal', 42, 'Horas máximas a la semana (solo para aviso)'],
   ['recargoNocturno', 0.35, 'Recargo nocturno (7:00 p.m. a 6:00 a.m.)'],
   ['recargoDominical', 0.90, 'Recargo domingo/festivo (sube a 100% el 1-jul-2027)'],

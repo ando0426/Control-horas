@@ -154,7 +154,7 @@
     const pie = [
       'Cómo se calculó:',
       '• Hora ordinaria = salario mínimo ÷ ' + datos.cfg.horasMes + ' horas al mes.',
-      '• Hora extra: lo que pase de ' + datos.cfg.jornadaDiaria + ' horas en el día (+' + Math.round(datos.cfg.extraDiurna * 100) + '% de día, +' + Math.round(datos.cfg.extraNocturna * 100) + '% de noche).',
+      '• Hora extra: lo que pase de ' + Calculo.descripcionJornada(datos.cfg) + ' (+' + Math.round(datos.cfg.extraDiurna * 100) + '% de día, +' + Math.round(datos.cfg.extraNocturna * 100) + '% de noche).',
       '• Recargo nocturno +' + Math.round(datos.cfg.recargoNocturno * 100) + '% (de ' + datos.cfg.inicioNoche + ':00 a ' + datos.cfg.finNoche + ':00). Domingo o festivo +' + Math.round(datos.cfg.recargoDominical * 100) + '%.',
       '• No incluye auxilio de transporte ni prestaciones (prima, cesantías, vacaciones).'
     ];
@@ -275,7 +275,7 @@
     const cfg = datos.cfg;
     const notas = [
       'Valor hora ordinaria: ' + plata(datos.valorHora) + ' (salario ' + plata(cfg.salario) + ' / ' + cfg.horasMes + ' h al mes).',
-      'Hora extra: lo que pase de ' + cfg.jornadaDiaria + ' h en el día (+' + Math.round(cfg.extraDiurna * 100) + '% de día, +' + Math.round(cfg.extraNocturna * 100) + '% de noche).',
+      'Hora extra: lo que pase de ' + Calculo.descripcionJornada(cfg) + ' (+' + Math.round(cfg.extraDiurna * 100) + '% de día, +' + Math.round(cfg.extraNocturna * 100) + '% de noche).',
       'Recargo nocturno +' + Math.round(cfg.recargoNocturno * 100) + '% (7:00 p. m. a 6:00 a. m.). Domingo o festivo +' + Math.round(cfg.recargoDominical * 100) + '%.',
       'No incluye auxilio de transporte ni prestaciones (prima, cesantías, vacaciones).'
     ];
